@@ -1,7 +1,9 @@
 from rest_framework import serializers
-from .models import Invoice
+from .models import Invoice, InvoiceFile
 
-class InvoiceSerializer(serializers.ModelSerializer):
+class InvoiceFile_Serializer(serializers.ModelSerializer):
     class Meta:
-        model = Invoice
-        fields = ('contactName', 'invoiceNumber', 'invoiceDate', 'dueDate', 'description', 'quantity', 'unitAmount')
+        model = InvoiceFile
+        fields = ('invoice_csv',)
+
+            
