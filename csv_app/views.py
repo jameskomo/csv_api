@@ -11,6 +11,7 @@ from .models import Invoice
 from django.contrib import messages
 import logging
 from .forms import InvoiceForm
+from django.db.models import Sum
 
 def uploadcsv(request):
 	data = {}
@@ -32,6 +33,8 @@ def uploadcsv(request):
 		lines = file_data.split("\n")
 		#loop over the lines and save them in db. If error , store as string and then display
 		for line in lines:
+			print(type(line))
+      		# print(type)
 			fields = line.split(",")
 			data_dict = {}
 			data_dict["contactName"] = fields[0]
@@ -72,5 +75,8 @@ class InvoiceUploadAPIView(CreateAPIView):
         io_string = io.StringIO(decoded_file)
         reader = csv.reader(io_string)
         for row in reader:
-            print(row)
+            data_dict = {}
+            data_dict["contactName"] = row[0]
+            
+            
         return Response(status=status.HTTP_204_NO_CONTENT)
