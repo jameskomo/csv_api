@@ -14,6 +14,5 @@ class Invoice(models.Model):
         return self.contactName
 
 class InvoiceFile(models.Model):
-    invoice= models.ForeignKey(Invoice,on_delete=models.CASCADE)
-    invoice_csv = models.FileField(upload_to='invoice/')
+    file = models.FileField(upload_to='invoice/')
     

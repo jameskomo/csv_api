@@ -3,6 +3,7 @@ from rest_framework.generics import CreateAPIView
 from .serializer import InvoiceFile_Serializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import status
 import csv, io
 from django.shortcuts import render, HttpResponseRedirect, reverse
 import codecs
@@ -59,25 +60,17 @@ def uploadcsv(request):
 
 	return HttpResponseRedirect(reverse("csv-home"))
 
-class InvoiceUpload(APIView):
+class InvoiceUploadAPIView(CreateAPIView):
     serializer_class = InvoiceFile_Serializer
-    parser_classes = [ MultiPartParser,FormParser ]
 
-    def post(self,request):
-        try:
-            serializer = InvoiceFile_Serializer(data=request.data)
-            print(serializer.initial_data)
-
-            if serializer.is_valid():
-                if serializer.is_valid():
-                    data = self.request.data.get('datafile')
-                    reader = csv.DictReader(data, delimiter='\t')
-                    for row in reader:
-                        print (row['customer'])
-            else:
-                print(serializer.errors)
-                return Response("Not Done")
-
-        except Exception as e:
-            return Response(str(e)) 
-
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        file = serializer.validated_data['file']
+        decoded_file = file.read().decode()
+        # upload_products_csv.delay(decoded_file, request.user.pk)
+        io_string = io.StringIO(decoded_file)
+        reader = csv.reader(io_string)
+        for row in reader:
+            print(row)
+        return Response(status=status.HTTP_204_NO_CONTENT)
