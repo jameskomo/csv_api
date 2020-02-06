@@ -4,6 +4,6 @@ from .models import Invoice, InvoiceFile
 class InvoiceFile_Serializer(serializers.ModelSerializer):
     class Meta:
         model = InvoiceFile
-        fields = ('invoice_csv',)
+        fields = ('invoice_csv','invoice')
 
             

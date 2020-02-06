@@ -11,8 +11,9 @@ class Invoice(models.Model):
     unitAmount=models.IntegerField()
 
     def __str__(self):
-        return self.invoiceNumber
+        return self.contactName
 
 class InvoiceFile(models.Model):
     invoice= models.ForeignKey(Invoice,on_delete=models.CASCADE)
     invoice_csv = models.FileField(upload_to='invoice/')
+    
