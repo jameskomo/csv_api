@@ -5,63 +5,80 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 import csv, io
+from datetime import datetime
 from django.shortcuts import render, HttpResponseRedirect, reverse
 import codecs
 from .models import Invoice
 from django.contrib import messages
 import logging
 from .forms import InvoiceForm
-from django.db.models import Sum
+
 
 def uploadcsv(request):
-	data = {}
-	if "GET" == request.method:
-		return render(request, "base.html", data)
-	# if not GET, then proceed
-	try:
-		csv_file = request.FILES["csv_file"]
-		if not csv_file.name.endswith('.csv'):
-			messages.error(request,'File is not CSV type')
-			return HttpResponseRedirect(reverse("csv_app:upload_csv"))
-		#if file is too large, return
-		if csv_file.multiple_chunks():
-			messages.error(request,"Uploaded file is too big (%.2f MB)." % (csv_file.size/(1000*1000),))
-			return HttpResponseRedirect(reverse("csv_app:upload_csv"))
+    data = {}
+    if "GET" == request.method:
+        return render(request, "base.html", data)
+    # if not GET, then proceed
+    try:
+        csv_file = request.FILES["csv_file"]
+        if not csv_file.name.endswith('.csv'):
+            messages.error(request, 'File is not CSV type')
+            return HttpResponseRedirect(reverse("csv_app:upload_csv"))
+        # if file is too large, return
+        if csv_file.multiple_chunks():
+            messages.error(request, "Uploaded file is too big (%.2f MB)." % (csv_file.size / (1000 * 1000),))
+            return HttpResponseRedirect(reverse("csv_app:upload_csv"))
 
-		file_data = csv_file.read().decode("utf-8")  		
+        file_data = csv_file.read().decode("utf-8")
 
-		lines = file_data.split("\n")
-		#loop over the lines and save them in db. If error , store as string and then display
-		for line in lines:
-			print(type(line))
-      		# print(type)
-			fields = line.split(",")
-			data_dict = {}
-			data_dict["contactName"] = fields[0]
-			data_dict["invoiceNumber"] = fields[10]
-			data_dict["invoiceDate"] = fields[12]
-			data_dict["dueDate"] = fields[13]
-			data_dict["description"] = fields[16]
-			data_dict["quantity"] = fields[17]
-			data_dict["unitAmount"] = fields[18]
-   
-   
-   
-			try:
-				form = InvoiceForm(data_dict)
-				if form.is_valid():
-					form.save()
-				else:
-					logging.getLogger("error_logger").error(form.errors.as_json())                                                
-			except Exception as e:
-				logging.getLogger("error_logger").error(form.errors.as_json())                    
-				pass
+        io_string = io.StringIO(file_data)
 
-	except Exception as e:
-		logging.getLogger("error_logger").error("Unable to upload file. "+repr(e))
-		messages.error(request,"Unable to upload file. "+repr(e))
+        # loop over the lines and save them in db. If error , store as string and then display
+        i = 0
+        for fields in csv.reader(io_string, skipinitialspace=True):
+            # only allow after header
+            if (i):
+                if (len(fields) > 19):
+                    data_dict = {}
+                    data_dict["contactName"] = fields[0]
+                    data_dict["invoiceNumber"] = fields[10]
+                    data_dict["invoiceDate"] = datetime.strptime(fields[12], '%d/%m/%Y')
+                    data_dict["dueDate"] = datetime.strptime(fields[13], '%d/%m/%Y')
+                    #date dict just for demonstration
+                    data_dict["description"] = fields[16]
+                    data_dict["quantity"] = fields[17]
+                    data_dict["unitAmount"] = fields[18]
+                    try:
+                        #add Invoice Directly to model
+                        test = Invoice.objects.create(contactName=fields[0], invoiceNumber=fields[10],
+                                                      invoiceDate=datetime.strptime(fields[12], '%d/%m/%Y'),
+                                                      dueDate=datetime.strptime(fields[12], '%d/%m/%Y'),
+                                                      description=fields[16], quantity=fields[17],
+                                                      unitAmount=fields[18])
+                        print(test.invoiceDate.month)
+                       
+                    except Exception as e:
+                        print(e)
+                    try:
+                        form = InvoiceForm()
+                        if form.is_valid():
+                            form.save()
+                        else:
+                            logging.getLogger("error_logger").error(form.errors.as_json())
+                    except Exception as e:
+                        logging.getLogger("error_logger").error(form.errors.as_json())
+                        pass
+            i = i + 1
 
-	return HttpResponseRedirect(reverse("csv-home"))
+        #testing
+        # firstRow = Invoice.objects.first()
+    except Exception as e:
+        logging.getLogger("error_logger").error("Unable to upload file. " + repr(e))
+        messages.error(request, "Unable to upload file. " + repr(e))
+
+    return HttpResponseRedirect(reverse("csv-home"))
+
+
 
 class InvoiceUploadAPIView(CreateAPIView):
     serializer_class = InvoiceFile_Serializer
@@ -70,13 +87,48 @@ class InvoiceUploadAPIView(CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         file = serializer.validated_data['file']
-        decoded_file = file.read().decode()
-        # upload_products_csv.delay(decoded_file, request.user.pk)
-        io_string = io.StringIO(decoded_file)
-        reader = csv.reader(io_string)
-        for row in reader:
-            data_dict = {}
-            data_dict["contactName"] = row[0]
-            
-            
+        file_data = file.read().decode("utf-8")
+
+        io_string = io.StringIO(file_data)
+
+        # loop over the lines and save them in db. If error , store as string and then display
+        i = 0
+        for fields in csv.reader(io_string, skipinitialspace=True):
+            # only allow after header
+            if (i):
+                if (len(fields) > 19):
+                    data_dict = {}
+                    data_dict["contactName"] = fields[0]
+                    data_dict["invoiceNumber"] = fields[10]
+                    data_dict["invoiceDate"] = datetime.strptime(fields[12], '%d/%m/%Y')
+                    data_dict["dueDate"] = datetime.strptime(fields[13], '%d/%m/%Y')
+                    # date dict just for demonstration
+                    data_dict["description"] = fields[16]
+                    data_dict["quantity"] = fields[17]
+                    data_dict["unitAmount"] = fields[18]
+                    try:
+                        # add Invoice Directly to model
+                        test = Invoice.objects.create(contactName=fields[0], invoiceNumber=fields[10],
+                                                      invoiceDate=datetime.strptime(fields[12], '%d/%m/%Y'),
+                                                      dueDate=datetime.strptime(fields[12], '%d/%m/%Y'),
+                                                      description=fields[16], quantity=fields[17],
+                                                      unitAmount=fields[18])
+                        print(test)
+                    except Exception as e:
+                        print(e)
+                    try:
+                        form = InvoiceForm()
+                        if form.is_valid():
+                            form.save()
+                        else:
+                            logging.getLogger("error_logger").error(form.errors.as_json())
+                    except Exception as e:
+                        logging.getLogger("error_logger").error(form.errors.as_json())
+                        pass
+            i = i + 1
+
+        # just for demo , delete after learning
+        firstRow = Invoice.objects.first()
+        print(firstRow)
+
         return Response(status=status.HTTP_204_NO_CONTENT)
