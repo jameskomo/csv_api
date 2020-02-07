@@ -55,7 +55,7 @@ def uploadcsv(request):
                                                       dueDate=datetime.strptime(fields[12], '%d/%m/%Y'),
                                                       description=fields[16], quantity=fields[17],
                                                       unitAmount=fields[18])
-                        print(test.invoiceDate.month)
+                      
                        
                     except Exception as e:
                         print(e)
@@ -113,7 +113,7 @@ class InvoiceUploadAPIView(CreateAPIView):
                                                       dueDate=datetime.strptime(fields[12], '%d/%m/%Y'),
                                                       description=fields[16], quantity=fields[17],
                                                       unitAmount=fields[18])
-                        print(test)
+                        print(test.invoiceDate)
                     except Exception as e:
                         print(e)
                     try:
@@ -129,6 +129,6 @@ class InvoiceUploadAPIView(CreateAPIView):
 
         # just for demo , delete after learning
         firstRow = Invoice.objects.first()
-        print(firstRow)
+        
 
         return Response(status=status.HTTP_204_NO_CONTENT)
