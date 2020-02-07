@@ -12,6 +12,7 @@ from .models import Invoice
 from django.contrib import messages
 import logging
 from .forms import InvoiceForm
+from django.db.models import Sum, Count
 
 
 def uploadcsv(request):
@@ -129,6 +130,12 @@ class InvoiceUploadAPIView(CreateAPIView):
 
         # just for demo , delete after learning
         firstRow = Invoice.objects.first()
+        
+        # Calculating Amounts
+        total=Invoice.objects.all().aggregate(Sum('unitAmount'))
+        print(total)
+        
+
         
 
         return Response(status=status.HTTP_204_NO_CONTENT)
