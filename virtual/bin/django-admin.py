@@ -1,4 +1,4 @@
-#!/home/komo/Documents/moringa-school/Python/Django/csv_project/virtual/bin/python
+#!/home/komo/Documents/moringa-school/Python/Django/csv_api/virtual/bin/python
 from django.core import management
 
 if __name__ == "__main__":
