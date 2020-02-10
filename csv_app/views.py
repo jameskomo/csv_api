@@ -12,7 +12,7 @@ from .models import Invoice
 from django.contrib import messages
 import logging
 from .forms import InvoiceForm
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, Max
 
 
 def uploadcsv(request):
@@ -56,8 +56,6 @@ def uploadcsv(request):
                                                       dueDate=datetime.strptime(fields[12], '%d/%m/%Y'),
                                                       description=fields[16], quantity=fields[17],
                                                       unitAmount=fields[18])
-                      
-                       
                     except Exception as e:
                         print(e)
                     try:
@@ -114,7 +112,8 @@ class InvoiceUploadAPIView(CreateAPIView):
                                                       dueDate=datetime.strptime(fields[12], '%d/%m/%Y'),
                                                       description=fields[16], quantity=fields[17],
                                                       unitAmount=fields[18])
-                        print(test.invoiceDate)
+                        
+                        
                     except Exception as e:
                         print(e)
                     try:
@@ -128,12 +127,17 @@ class InvoiceUploadAPIView(CreateAPIView):
                         pass
             i = i + 1
 
-        # just for demo , delete after learning
-        firstRow = Invoice.objects.first()
-        
+        # just for demo
+        invoices = Invoice.objects.all()
+    
         # Calculating Amounts
-        total=Invoice.objects.all().aggregate(Sum('unitAmount'))
-        print(total)
+        total_by_month=Invoice.objects.all().aggregate(Sum('unitAmount')).
+        print(total_by_month)
+        # queryset = Invoice.objects.values('Invoice__dueDate').annotate(Invoice_dueDate=Sum('Invoice.quantity*Invoice*unitAmount')).group_by('dueDate.month')
+        # print(queryset)
+        # top_customers=Invoice.objects.values('quantity').annotate(Count('quantity'))[:4]
+        top_customers=Invoice.objects.all().aggregate(Max('quantity'))
+        print(top_customers)
         
 
         
