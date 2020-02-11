@@ -72,6 +72,46 @@
 
 
     <!-- Navbar end -->
+
+
+    <!-- API Calculations -->
+    <h2>Calculations</h2>
+
+<h4>Summary of total amount incurred for each month</h4>
+{% for monthly in monthly_totals%}
+
+{{monthly}}
+
+{% endfor %}
+
+<hr>
+<h4>Top 5 Customers by Totals</h4>
+{% for customer in top_five_customers%}
+
+{{customer}}
+
+{% endfor %}
+
+<hr>
+<h4>Top 5 Customers by Quantities</h4>
+{% for quantity in top_customers_quantity%}
+
+{{customer}}
+
+{% endfor %}
+
+<hr>
+<hr>
+<h4>Daily Transactions Last 30 days</h4>
+{% for transaction in  total_daily_invoice%}
+
+{{transaction}}
+
+{% endfor %}
+
+<hr>
+
+    <!-- Calculations End -->
     
         {% if messages %}
     <div>

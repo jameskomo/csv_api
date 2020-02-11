@@ -92,7 +92,7 @@ def uploadcsv(request):
     }
     
 
-    return render(request, 'csv_data.html', context)
+    return render(request, 'base.html', context)
 
 
 
@@ -165,7 +165,7 @@ class InvoiceUploadAPIView(CreateAPIView):
         print(context)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-        return render(request, 'csv_data.html', context)
+        return render(request, 'base.html', context)
 
 
 def csv_data(request):
