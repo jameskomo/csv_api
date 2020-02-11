@@ -83,16 +83,16 @@ def uploadcsv(request):
     dt_t = now - dt.timedelta(30)#Delta imported above
     total_daily_transaction=Invoice.objects.filter(invoiceDate__gte=dt_t, invoiceDate__lte=now).annotate(day=TruncDay('invoiceDate')).values('day').annotate(total=Sum(F('quantity')*F('unitAmount'))).values('day','total')
     
-    # print(total_daily_transaction)
+    print(type(total_daily_transaction))
 
     context={
         'monthly_totals_ui': monthly_totals_ui,
         'top_five_customers_ui': top_five_customers_ui,
-        'total_daily_transaction': total_daily_transaction
+        'total_daily_transaction_ui': total_daily_transaction_ui
     }
     
 
-    return render(request, 'base.html', context)
+    return render(request, 'csv_data.html', context)
 
 
 
@@ -165,7 +165,7 @@ class InvoiceUploadAPIView(CreateAPIView):
         print(context)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-        return render(request, 'base.html', context)
+        return render(request, 'csv_data.html', context)
 
 
 def csv_data(request):
