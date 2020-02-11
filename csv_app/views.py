@@ -19,7 +19,7 @@ import logging
 from .forms import InvoiceForm
 from django.db.models import Sum, F
 # Truncates a date up to a significant component.-The month or year
-from django.db.models.functions import TruncMonth, TruncYear
+from django.db.models.functions import TruncMonth, TruncYear, TruncDay
 
 
 def uploadcsv(request):
@@ -65,15 +65,7 @@ def uploadcsv(request):
                                                       unitAmount=fields[18])
                     except Exception as e:
                         print(e)
-                    try:
-                        form = InvoiceForm()
-                        if form.is_valid():
-                            form.save()
-                        else:
-                            logging.getLogger("error_logger").error(form.errors.as_json())
-                    except Exception as e:
-                        logging.getLogger("error_logger").error(form.errors.as_json())
-                        pass
+
             i = i + 1
 
         #testing
@@ -81,6 +73,32 @@ def uploadcsv(request):
     except Exception as e:
         logging.getLogger("error_logger").error("Unable to upload file. " + repr(e))
         messages.error(request, "Unable to upload file. " + repr(e))
+
+     # Calculating UI Amounts
+
+        # Returning a summary of total amount incurred for each month
+        monthly_totals_ui=Invoice.objects.annotate(month=TruncMonth('invoiceDate'), year=TruncYear("invoiceDate")).values('month', 'year').annotate(total=Sum(F('quantity')*F('unitAmount'))).values('month', 'year', 'total')
+        print(monthly_totals_ui)   
+        # Returning the Top Five customers according Total amount (quantity * unitAmount) due for a given year
+        top_five_customers_ui=Invoice.objects.all().annotate(customer_total=Sum(F('quantity')*F('unitAmount'))).order_by('-customer_total').values_list('contactName', 'customer_total')[:5]
+        
+        # Returning the Top Five customers, according to Quantity bought.
+        top_customers_quantity_ui=Invoice.objects.all().order_by('-quantity').values_list('contactName', 'quantity')[:5]
+
+        # Returning total invoice transaction per day for all transactions that took place 30days from a given date.
+        now = datetime.now()
+        dt_t = now - dt.timedelta(30)#Delta imported above
+        total_daily_invoice_ui=Invoice.objects.filter(invoiceDate__gte=dt_t, invoiceDate__lte=now).annotate(day=TruncDay('invoiceDate')).values('day').annotate(total=Sum(F('quantity')*F('unitAmount'))).values('day','total')
+       
+        context={
+            'monthly_totals_ui': monthly_totals_ui,
+            'top_five_customers_ui': top_five_customers_ui,
+            'top_customers_quantity_ui': top_customers_quantity_ui,
+            'total_daily_invoice_ui': total_daily_invoice_ui
+
+        }
+      
+
 
     return HttpResponseRedirect(reverse("csv-home"))
 
@@ -129,7 +147,7 @@ class InvoiceUploadAPIView(CreateAPIView):
         invoices = Invoice.objects.all()
         
     
-        # Calculating Amounts
+        # Calculating API Amounts
 
         # Returning a summary of total amount incurred for each month
         monthly_totals=Invoice.objects.annotate(month=TruncMonth('invoiceDate'), year=TruncYear("invoiceDate")).values('month', 'year').annotate(total=Sum(F('quantity')*F('unitAmount'))).values('month', 'year', 'total')
@@ -143,8 +161,16 @@ class InvoiceUploadAPIView(CreateAPIView):
         # Returning total invoice transaction per day for all transactions that took place 30days from a given date.
         now = datetime.now()
         dt_t = now - dt.timedelta(30)#Delta imported above
-        total_daily_invoice=Invoice.objects.filter(invoiceDate__gte=dt_t, invoiceDate__lte=now).values_list('invoiceDate')
-        print(total_daily_invoice)
+        total_daily_invoice=Invoice.objects.filter(invoiceDate__gte=dt_t, invoiceDate__lte=now).annotate(day=TruncDay('invoiceDate')).values('day').annotate(total=Sum(F('quantity')*F('unitAmount'))).values('day','total')
+       
+        context={
+            'monthly_totals': monthly_totals,
+            'top_five_customers': top_five_customers,
+            'top_customers_quantity': top_customers_quantity,
+            'total_daily_invoice': total_daily_invoice
+
+        }
+        
 
         return Response(status=status.HTTP_204_NO_CONTENT)
         return render(request, 'base.html', context)
