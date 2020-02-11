@@ -11,7 +11,7 @@ import datetime as dt
 from datetime import datetime
 
 # Date imports end
-from django.shortcuts import render, HttpResponseRedirect, reverse
+from django.shortcuts import render, HttpResponseRedirect, reverse, HttpResponse
 import codecs
 from .models import Invoice
 from django.contrib import messages
@@ -68,39 +68,31 @@ def uploadcsv(request):
 
             i = i + 1
 
-        #testing
-        # firstRow = Invoice.objects.first()
     except Exception as e:
         logging.getLogger("error_logger").error("Unable to upload file. " + repr(e))
         messages.error(request, "Unable to upload file. " + repr(e))
 
-     # Calculating UI Amounts
+    #Calculating UI Amounts
+    # Returning a summary of total amount incurred for each month
+    monthly_totals_ui=Invoice.objects.annotate(month=TruncMonth('invoiceDate'), year=TruncYear("invoiceDate")).values('month', 'year').annotate(total=Sum(F('quantity')*F('unitAmount'))).values('month', 'year', 'total')
+    # Data for a Bar Chart showing Top Five customers according Total amount due
+    top_five_customers_ui=Invoice.objects.all().annotate(customer_total=Sum(F('quantity')*F('unitAmount'))).order_by('-customer_total').values_list('contactName', 'customer_total')[:5]
+    
+    # Data for A line graph showing all transactions that took place 30days from a given date (using today's date for demo)
+    now = datetime.now()
+    dt_t = now - dt.timedelta(30)#Delta imported above
+    total_daily_transaction=Invoice.objects.filter(invoiceDate__gte=dt_t, invoiceDate__lte=now).annotate(day=TruncDay('invoiceDate')).values('day').annotate(total=Sum(F('quantity')*F('unitAmount'))).values('day','total')
+    
+    # print(total_daily_transaction)
 
-        # Returning a summary of total amount incurred for each month
-        monthly_totals_ui=Invoice.objects.annotate(month=TruncMonth('invoiceDate'), year=TruncYear("invoiceDate")).values('month', 'year').annotate(total=Sum(F('quantity')*F('unitAmount'))).values('month', 'year', 'total')
-        print(monthly_totals_ui)   
-        # Returning the Top Five customers according Total amount (quantity * unitAmount) due for a given year
-        top_five_customers_ui=Invoice.objects.all().annotate(customer_total=Sum(F('quantity')*F('unitAmount'))).order_by('-customer_total').values_list('contactName', 'customer_total')[:5]
-        
-        # Returning the Top Five customers, according to Quantity bought.
-        top_customers_quantity_ui=Invoice.objects.all().order_by('-quantity').values_list('contactName', 'quantity')[:5]
+    context={
+        'monthly_totals_ui': monthly_totals_ui,
+        'top_five_customers_ui': top_five_customers_ui,
+        'total_daily_transaction': total_daily_transaction
+    }
+    print(context)
 
-        # Returning total invoice transaction per day for all transactions that took place 30days from a given date.
-        now = datetime.now()
-        dt_t = now - dt.timedelta(30)#Delta imported above
-        total_daily_invoice_ui=Invoice.objects.filter(invoiceDate__gte=dt_t, invoiceDate__lte=now).annotate(day=TruncDay('invoiceDate')).values('day').annotate(total=Sum(F('quantity')*F('unitAmount'))).values('day','total')
-       
-        context={
-            'monthly_totals_ui': monthly_totals_ui,
-            'top_five_customers_ui': top_five_customers_ui,
-            'top_customers_quantity_ui': top_customers_quantity_ui,
-            'total_daily_invoice_ui': total_daily_invoice_ui
-
-        }
-      
-
-
-    return HttpResponseRedirect(reverse("csv-home"))
+    return render(request, 'base.html', context)
 
 
 
@@ -170,7 +162,7 @@ class InvoiceUploadAPIView(CreateAPIView):
             'total_daily_invoice': total_daily_invoice
 
         }
-        
+        print(context)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
         return render(request, 'base.html', context)
