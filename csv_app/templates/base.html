@@ -40,17 +40,13 @@
             </a>
             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
               <a class="dropdown-item" href="{% url 'csv-home'%}">UI Upload</a>
+              
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="{% url 'api-upload'%}" target="_blank">API Upload</a>
             </div>
           </li>
-
-          <!-- CSV Data -->
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="{% url 'csv-data'%}" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              CSV Data
-            </a>
-          </li>
+                
+        </ul>
           
         </nav>
         <!-- UPLOAD FORM -->
@@ -73,45 +69,90 @@
 
     <!-- Navbar end -->
 
-
-    <!-- API Calculations -->
+        <!-- API Calculations -->
     <h2>Calculations</h2>
+    <h4><b>API CSV</b> </h4>
 
-<h4>Summary of total amount incurred for each month</h4>
-{% for monthly in monthly_totals%}
+    <h4>Summary of total amount incurred for each month</h4>
 
-{{monthly}}
+    <table class="table table-striped" >
+      <thead>
+      <td>YEAR</td>
+      <td>MONTH</td>
+      <td>TOTAL</td>
+      </thead>
+  
+      {% for monthly in monthly_totals %}
+      <tr>
+          <td>{{monthly.year.year }}</td>
+          <td>{{monthly.year.month}}</td>
+          <td>{{monthly.total}}</td>
+    
+      </tr>
+      {% endfor %}
+  </table>
+    
+    <hr>
+    <h4>Top 5 Customers by Totals</h4>
+    
+  
+      {% for customer in top_five_customers %}
+      
+          {{customer}}
+    
+      {% endfor %}
+   <h4>Top 5 Customers by Quantities</h4>
+    {% for quantity in top_customers_quantity%}
+    
+    {{quantity}}
+    
+    {% endfor %}
+    
+    <hr>
+    <hr>
+    <h4>Daily Transactions Last 30 days</h4>
+    <table class="table table-striped" >
+      <thead>
+      <td>DAY</td>
+      <td>TOTAL</td>
+      </thead>
+  
+      {% for invoice in total_daily_invoice %}
+      <tr>
+          <td>{{invoice.day }}</td>
+          <td>{{invoice.total}}</td>
+         
+    
+      </tr>
+      {% endfor %}
+  </table>
+    
+    <hr>
 
-{% endfor %}
+    <h4><b>UI CSV</b> </h4>
+    <hr>
+    <h4>Monthly Summary</h4>
+    <table class="table table-striped" >
+      <thead>
+      <td>DAY</td>
+      <td>TOTAL</td>
+      </thead>
+  
+      {% for month in total_daily_transaction_ui %}
+      <tr>
+          <td>{{month.day }}</td>
+          <td>{{month.total}}</td>
+    
+      </tr>
+      {% endfor %}
+  </table>
+    
+    <hr>
+    
+        <!-- Calculations End -->
+        
+   
 
-<hr>
-<h4>Top 5 Customers by Totals</h4>
-{% for customer in top_five_customers%}
-
-{{customer}}
-
-{% endfor %}
-
-<hr>
-<h4>Top 5 Customers by Quantities</h4>
-{% for quantity in top_customers_quantity%}
-
-{{customer}}
-
-{% endfor %}
-
-<hr>
-<hr>
-<h4>Daily Transactions Last 30 days</h4>
-{% for transaction in  total_daily_invoice%}
-
-{{transaction}}
-
-{% endfor %}
-
-<hr>
-
-    <!-- Calculations End -->
     
         {% if messages %}
     <div>
@@ -124,6 +165,16 @@
       </ul>
     </div>
     {% endif %}
+
+    <!-- CSV Data Render -->
+
+    
+    
+          
+
+   
+
+    <!-- End CSV Data -->
 
     {% block content %}
     {% endblock %}

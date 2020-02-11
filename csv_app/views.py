@@ -6,6 +6,9 @@ from rest_framework.response import Response
 from rest_framework import status
 import csv, io
 
+# Pandas
+import pandas as pd
+
 # Calculate transactions from date
 import datetime as dt
 from datetime import datetime
@@ -29,6 +32,7 @@ def uploadcsv(request):
     # if not GET, then proceed
     try:
         csv_file = request.FILES["csv_file"]
+
         if not csv_file.name.endswith('.csv'):
             messages.error(request, 'File is not CSV type')
             return HttpResponseRedirect(reverse("csv_app:upload_csv"))
@@ -81,14 +85,15 @@ def uploadcsv(request):
     # Data for A line graph showing all transactions that took place 30days from a given date (using today's date for demo)
     now = datetime.now()
     dt_t = now - dt.timedelta(30)#Delta imported above
-    total_daily_transaction=Invoice.objects.filter(invoiceDate__gte=dt_t, invoiceDate__lte=now).annotate(day=TruncDay('invoiceDate')).values('day').annotate(total=Sum(F('quantity')*F('unitAmount'))).values('day','total')
+    total_daily_transaction_ui=Invoice.objects.filter(invoiceDate__gte=dt_t, invoiceDate__lte=now).annotate(day=TruncDay('invoiceDate')).values('day').annotate(total=Sum(F('quantity')*F('unitAmount'))).values('day','total')
     
-    print(type(total_daily_transaction))
+    # print(total_daily_transaction)
 
     context={
         'monthly_totals_ui': monthly_totals_ui,
         'top_five_customers_ui': top_five_customers_ui,
-        'total_daily_transaction_ui': total_daily_transaction_ui
+        'total_daily_transaction_ui': total_daily_transaction_ui,
+        
     }
     
 
@@ -135,15 +140,12 @@ class InvoiceUploadAPIView(CreateAPIView):
                         print(e)
             i = i + 1
 
-        # just for demo
-        invoices = Invoice.objects.all()
-        
+       
     
         # Calculating API Amounts
 
         # Returning a summary of total amount incurred for each month
         monthly_totals=Invoice.objects.annotate(month=TruncMonth('invoiceDate'), year=TruncYear("invoiceDate")).values('month', 'year').annotate(total=Sum(F('quantity')*F('unitAmount'))).values('month', 'year', 'total')
-        
         # Returning the Top Five customers according Total amount (quantity * unitAmount) due for a given year
         top_five_customers=Invoice.objects.all().annotate(customer_total=Sum(F('quantity')*F('unitAmount'))).order_by('-customer_total').values_list('contactName', 'customer_total')[:5]
         
@@ -155,22 +157,11 @@ class InvoiceUploadAPIView(CreateAPIView):
         dt_t = now - dt.timedelta(30)#Delta imported above
         total_daily_invoice=Invoice.objects.filter(invoiceDate__gte=dt_t, invoiceDate__lte=now).annotate(day=TruncDay('invoiceDate')).values('day').annotate(total=Sum(F('quantity')*F('unitAmount'))).values('day','total')
        
-        context={
-            'monthly_totals': monthly_totals,
-            'top_five_customers': top_five_customers,
-            'top_customers_quantity': top_customers_quantity,
-            'total_daily_invoice': total_daily_invoice
-
-        }
-        print(context)
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
-        return render(request, 'base.html', context)
+        
+        return render(request, 'base.html', {'monthly_totals': monthly_totals,'top_five_customers': top_five_customers, 'top_customers_quantity': top_customers_quantity,'total_daily_invoice': total_daily_invoice})
 
 
 def csv_data(request):
-    csvfile = request.FILES['csv_file']
-    data = pd.read_csv(csvfile.name)
-    data_html = data.to_html()
-    context = {'loaded_data': data_html}
-    return render(request, "csv_data.html", context)
+    invoices=Invoice.objects.all()
+    context={'invoices': invoices}
+    return render (request, 'csv_data.html', context)
