@@ -6,9 +6,6 @@ from rest_framework.response import Response
 from rest_framework import status
 import csv, io
 
-# Pandas
-import pandas as pd
-
 # Calculate transactions from date
 import datetime as dt
 from datetime import datetime
