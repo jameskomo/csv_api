@@ -5,7 +5,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 import csv, io
+
+# Calculate transactions from date
+import datetime as dt
 from datetime import datetime
+
+# Date imports end
 from django.shortcuts import render, HttpResponseRedirect, reverse
 import codecs
 from .models import Invoice
@@ -133,8 +138,13 @@ class InvoiceUploadAPIView(CreateAPIView):
         top_five_customers=Invoice.objects.all().annotate(customer_total=Sum(F('quantity')*F('unitAmount'))).order_by('-customer_total').values_list('contactName', 'customer_total')[:5]
         
         # Returning the Top Five customers, according to Quantity bought.
-        top_customers_quantity=Invoice.objects.all().order_by('-quantity').values_list('contactName')[:5]
-        print(top_customers_quantity)
+        top_customers_quantity=Invoice.objects.all().order_by('-quantity').values_list('contactName', 'quantity')[:5]
+
+        # Returning total invoice transaction per day for all transactions that took place 30days from a given date.
+        now = datetime.now()
+        dt_t = now - dt.timedelta(30)#Delta imported above
+        total_daily_invoice=Invoice.objects.filter(invoiceDate__gte=dt_t, invoiceDate__lte=now).values_list('invoiceDate')
+        print(total_daily_invoice)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
         return render(request, 'base.html', context)
