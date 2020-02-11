@@ -166,3 +166,11 @@ class InvoiceUploadAPIView(CreateAPIView):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
         return render(request, 'base.html', context)
+
+
+def csv_data(request):
+    csvfile = request.FILES['csv_file']
+    data = pd.read_csv(csvfile.name)
+    data_html = data.to_html()
+    context = {'loaded_data': data_html}
+    return render(request, "csv_data.html", context)
