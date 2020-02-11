@@ -90,7 +90,7 @@ def uploadcsv(request):
         'top_five_customers_ui': top_five_customers_ui,
         'total_daily_transaction': total_daily_transaction
     }
-    print(context)
+    
 
     return render(request, 'base.html', context)
 
