@@ -13,6 +13,8 @@ from django.contrib import messages
 import logging
 from .forms import InvoiceForm
 from django.db.models import Sum, F
+# Truncates a date up to a significant component.-The month or year
+from django.db.models.functions import TruncMonth, TruncYear
 
 
 def uploadcsv(request):
@@ -123,7 +125,16 @@ class InvoiceUploadAPIView(CreateAPIView):
         
     
         # Calculating Amounts
- 
+
+        # Returning a summary of total amount incurred for each month
+        monthly_totals=Invoice.objects.annotate(month=TruncMonth('invoiceDate'), year=TruncYear("invoiceDate")).values('month', 'year').annotate(total=Sum(F('quantity')*F('unitAmount'))).values('month', 'year', 'total')
+        
+        # Returning the Top Five customers according Total amount (quantity * unitAmount) due for a given year
+        top_five_customers=Invoice.objects.all().annotate(customer_total=Sum(F('quantity')*F('unitAmount'))).order_by('-customer_total').values_list('contactName', 'customer_total')[:5]
+        
+        # Returning the Top Five customers, according to Quantity bought.
+        top_customers_quantity=Invoice.objects.all().order_by('-quantity').values_list('contactName')[:5]
+        print(top_customers_quantity)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
         return render(request, 'base.html', context)
