@@ -12,7 +12,7 @@ from .models import Invoice
 from django.contrib import messages
 import logging
 from .forms import InvoiceForm
-from django.db.models import Sum, Count, Max
+from django.db.models import Sum, F
 
 
 def uploadcsv(request):
@@ -116,30 +116,14 @@ class InvoiceUploadAPIView(CreateAPIView):
                         
                     except Exception as e:
                         print(e)
-                    # try:
-                    #     form = InvoiceForm()
-                    #     if form.is_valid():
-                    #         form.save()
-                    #     else:
-                    #         logging.getLogger("error_logger").error(form.errors.as_json())
-                    # except Exception as e:
-                    #     logging.getLogger("error_logger").error(form.errors.as_json())
-                    #     pass
             i = i + 1
 
         # just for demo
         invoices = Invoice.objects.all()
+        
     
         # Calculating Amounts
-        total_by_month=Invoice.objects.all().aggregate(Sum('unitAmount'))
-        print(total_by_month)
-        # queryset = Invoice.objects.values('Invoice__dueDate').annotate(Invoice_dueDate=Sum('Invoice.quantity*Invoice*unitAmount')).group_by('dueDate.month')
-        # print(queryset)
-        # top_customers=Invoice.objects.values('quantity').annotate(Count('quantity'))[:4]
-        top_customers=Invoice.objects.all().aggregate(Max('quantity'))
-        print(top_customers)
-        
-
-        
+ 
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+        return render(request, 'base.html', context)
